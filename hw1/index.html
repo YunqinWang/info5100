@@ -1,0 +1,81 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Yunqin Wang (yw652) HW1</title>
+    </head>
+
+    <body>
+        <h1>Yunqin Wang (yw652) HW1</h1>
+        <p> 
+            <b>Problem 1:</b>
+            <ul>
+                <li>a) dingus:              not a canonical Javascript type, no unusual behavior</li>
+                <li>b) array:               is a canonical Javascript type, unexpected typeof() behavior.
+                                            It says object, but arrays are a special kind of object with length.</li>
+                <li>c) boolean:             is a canonical Javascript type, no unusual behavior</li>
+                <li>d) int:                 is a canonical Javascript type, no unusual behavior</li>
+                <li>e) number:              is a canonical Javascript type, no unusual behavior</li>
+                <li>f) class:               is a canonical Javascript type, no unusual behavior</li>
+                <li>g) regex:               is a canonical Javascript type, no unusual behavior</li>
+                <li>h) string:              is a canonical Javascript type, no unusual behavior</li>
+                <li>i) Unicode:             is a canonical Javascript type, no unusual behavior</li>
+                <li>j) object:              is a canonical Javascript type, no unusual behavior</li>
+                <li>k) null:                is a canonical Javascript type, unusual typeof() behavior.
+                                            It says object, but should be null.</li>
+                <li>l) function:            is a canonical Javascript type, unusual typeof() behavior.
+                                            It says function, but should be object.</li>
+                <li>m) NaN (not a number):  is a canonical Javascript type, unexpected typeof() behavior.
+                                            It is still a number.</li>
+                <li>n) char:                is a canonical Javascript type, no unusual behavior</li>
+                <li>o) pointer:             not a canonical Javascript type, no unusual behavior</li>
+                <li>p) undefined:           is a canonical Javascript type, no unusual behavior</li>
+            </ul>
+            <script>
+                console.log(typeof([1,2,3]));
+                console.log(typeof(true));
+                console.log(typeof(1));
+                console.log(typeof(Math.PI));
+                console.log(typeof(Math));
+                console.log(typeof(/regex/));
+                console.log(typeof("hello"));
+                console.log(typeof("😊"));
+                console.log(typeof(new Object()));
+                console.log(typeof(null));
+                console.log(typeof(console.log));
+                console.log(typeof(NaN));
+                console.log(typeof('a'));
+                console.log(typeof(undefined));
+            </script>
+        </p>
+            
+        <p>
+            <b>Problem 2:</b><br/>
+            Type coercion is the process of converting value from one type to another (such as string to number, object to boolean, and so on). Any type, be it primitive or an object, is a valid subject for type coercion. 
+            <ul>Examples:
+                <li><code>"1" + 2 </code>will be "12", because the number 2 is coerced to a string to join with the string "1"</li>
+                <li> <code>true + false</code> will be "1", because true is coerced to 1, and flase is coerced to 0</li>
+            </ul>
+            <script>
+                console.log("1" + 2);
+                console.log(true + false);
+            </script>
+        </p>
+
+        <p>
+            <b>Problem 3:</b><br/>
+           
+            <script>
+               
+            </script>
+        </p>
+        
+        <p>
+            <b>Problem 4:</b><br/>
+            Any late work will receive a 0 score.<br/> 
+            Unreadable workd caused by mal-decompression, incorrect files, missing key files will receive a 0 without exception.<br/>
+            I have a total of 5 slip days for use as deadline extensions.
+        </p>
+
+
+    </body>
+</html>
