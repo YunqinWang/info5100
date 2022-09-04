@@ -62,10 +62,23 @@
         </p>
 
         <p>
-            <b>Problem 3:</b><br/>
-           
+            <b>Problem 3: recursive factorial calculation</b><br/>
             <script>
-               
+                function fact(num){
+                    if(num<0){
+                        return undefined;
+                    }
+                    if(num <=0){
+                        return 1;
+                    }
+                    return num*fact(num-1);
+                }
+
+                console.log( fact(-2) );
+                console.log( fact(0) );
+                console.log( fact(1) );
+                console.log( fact(5) );
+                console.log( fact(12) ); 
             </script>
         </p>
         

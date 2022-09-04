@@ -1,0 +1,123 @@
+<html>
+  <head>
+    <title>INFO3300-HW2</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <h3>Yunqin Wang (yw652)</h3>
+
+      <p>
+            Problem 1<br/>
+            <svg width="360" height="360" style="border: 1px solid black">
+            <!-- draw grids -->
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 20 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 52 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 84 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 116 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 148 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 180 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 212 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 244 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 276 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 308 H 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 340 H 340" />
+
+            <path style="stroke: grey; stroke-width: 1px" d="M 20 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 52 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 84 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 116 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 148 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 180 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 212 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 244 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 276 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 308 20 V 340" />
+            <path style="stroke: grey; stroke-width: 1px" d="M 340 20 V 340" />
+            
+            <circle cx="52", cy="308", r="10", style="fill:darkblue"/>
+            <circle cx="84", cy="276", r="10", style="fill:darkblue"/>
+            <circle cx="116", cy="244", r="10", style="fill:darkblue"/>
+            <circle cx="141.6", cy="180", r="10", style="fill:darkblue"/>
+            <circle cx="160.8", cy="135.2", r="10", style="fill:darkblue"/>
+            <circle cx="205.6", cy="100", r="10", style="fill:darkblue"/>
+            <circle cx="253.6", cy="77.6", r="10", style="fill:darkblue"/>
+            <circle cx="285.6", cy="61.6", r="10", style="fill:darkblue"/>
+            <circle cx="317.6", cy="45.6", r="10", style="fill:darkblue"/>
+
+            </svg>
+
+            <script>
+                function grid() {
+                    let a = [];
+                    for (let i = 0; i < 11; i++) {
+                    a.push(20 + 32 * i);
+                    }
+                    return a;
+                }
+                console.log("GRID:",grid());
+
+                function point() {
+                    let original=[[1.0,1.0],[2.0,2.0],[3.0,3.0],[3.8,5.0],[4.4,6.4],[5.8,7.5],
+                    [7.3,8.2],[8.3,8.7],[9.3,9.2]];
+                    for (let obj of original) {
+                        obj[0] = obj[0] *32 +20;
+                        obj[1] = 340- obj[1] *32;
+                    }
+                    return original;
+                }
+                console.log("GRID:",point())
+                newPoint=[[52,308],[84,276],[116, 244],[141.6, 180],[160.8, 135.2],[205.6, 100],
+                [253.6, 77.6],[285.6, 61.6],[317.6, 45.6]];
+
+
+            </script>
+        </p>
+
+        <p>Problem 2<br/>
+            a) the marks used: circles<br/>
+            b) the two visual channels: horizontal position and vertial position
+        </p>
+
+        <p>Problem 3<br/>
+            <svg width="300" height="300" style="border: 1px solid black">
+
+                <!-- draw fill -->
+                <rect x=0 y=240 width=40 height=60 style ="fill:yellow"/>
+                <rect x=180 y=0 width=80 height=120 style ="fill:yellow"/>
+                <rect x=40 y=40 width=140 height=160 style ="fill:red"/>
+                <rect x=260 y=240 width=40 height=60 style ="fill:red"/>
+                <rect x=180 y=240 width=80 height=60 style ="fill:blue"/>
+                <rect x=40 y=200 width=60 height=60 style ="fill:black"/>
+                <rect x=100 y=260 width=80 height=40 style ="fill:black"/>
+
+                <!-- draw horizontal lines -->
+                <path style = "stroke:black; stroke-width:8px" d="M 0 40 H 300"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 0 120 H 40"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 180 120 H 260"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 40 200 H 260"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 0 240 H 300"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 40 260 H 180"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 0 296 H 300"/>
+
+                <!-- draw vertical lines -->
+                <path style = "stroke:black; stroke-width:8px" d="M 40 40 V 300"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 92 0 V 40"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 100 200 V 300"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 180 0 V 300"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 220 120 V 200"/>
+                <path style = "stroke:black; stroke-width:8px" d="M 260 0 V 300"/>
+
+            </svg>
+        </p>
+    </div>
+  </body>
+
+  <style>
+    .container {
+      width: 60%;
+      margin: 50px auto;
+    }
+  </style>
+</html>
