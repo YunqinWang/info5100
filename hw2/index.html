@@ -47,32 +47,6 @@
             <circle cx="317.6", cy="45.6", r="10", style="fill:darkblue"/>
 
             </svg>
-
-            <script>
-                function grid() {
-                    let a = [];
-                    for (let i = 0; i < 11; i++) {
-                    a.push(20 + 32 * i);
-                    }
-                    return a;
-                }
-                console.log("GRID:",grid());
-
-                function point() {
-                    let original=[[1.0,1.0],[2.0,2.0],[3.0,3.0],[3.8,5.0],[4.4,6.4],[5.8,7.5],
-                    [7.3,8.2],[8.3,8.7],[9.3,9.2]];
-                    for (let obj of original) {
-                        obj[0] = obj[0] *32 +20;
-                        obj[1] = 340- obj[1] *32;
-                    }
-                    return original;
-                }
-                console.log("GRID:",point())
-                newPoint=[[52,308],[84,276],[116, 244],[141.6, 180],[160.8, 135.2],[205.6, 100],
-                [253.6, 77.6],[285.6, 61.6],[317.6, 45.6]];
-
-
-            </script>
         </p>
 
         <p>Problem 2<br/>
