@@ -1,0 +1,142 @@
+<html>
+  <head>
+    <title>INFO3300-HW3</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+
+  <body>
+    <div class="container">
+        <h3>Yunqin Wang (yw652)</h3>
+        <p>
+            Problem 1<br/>
+            <svg id="prob1"width="400" height="400" style="border: 1px solid black">
+            </svg>
+            <script>
+                let svg1 = d3.select("svg#prob1");
+                let width = svg1.attr("width");
+                let height = svg1.attr("height");
+
+                //circle element
+                svg1.append("circle")
+                    .attr("r", 5)
+                    .attr("cx",width/2)
+                    .attr("cy",height/2)
+                    .style("fill","LightBlue");
+
+                //text element
+                svg1.append("text")
+                    .attr("x",width/2)
+                    .attr("y",height/2)
+                    .text("Cornell!")
+                    .style("text-anchor", "middle")
+                    .style("dominant-baseline", "middle")
+                    .style("font-size","20px")
+                    .style("font-family","Verdana")
+                    .style("fill","DarkRed");
+                
+                // 3 rect
+                svg1.append("rect")
+                    .attr("x",width/4)
+                    .attr("y",height/4)
+                    .attr("width",50)
+                    .attr("height",25)
+                    .style("fill","Gold")
+                    .style("stroke","DodgerBlue")
+                    .style("stroke-width",3);
+                svg1.append("rect")
+                    .attr("x",width/4*3)
+                    .attr("y",height/4)
+                    .attr("width",25)
+                    .attr("height",50)
+                    .style("fill","Fuchsia")
+                    .style("stroke","RebeccaPurple")
+                    .style("stroke-width",4);
+                svg1.append("rect")
+                    .attr("x",width/4*1.5)
+                    .attr("y",height/4*3)
+                    .attr("width",50)
+                    .attr("height",30)
+                    .style("fill","DeepSkyBlue")
+                    .style("stroke","DarkBlue")
+                    .style("stroke-width",2);
+            </script>
+        </p>
+        <p>
+            Problem 2<br/>
+            <svg id="prob2"width="360" height="360" style="border: 1px solid black">
+            </svg>
+            <script>
+                let svg2 = d3.select("svg#prob2");
+                const colNum = 10
+                const plotWidth = 320
+                const plotPadding = 20
+                const valDomain = [0,10]
+                const originalPoints = [
+                    {"x":1.0 ,"y":1.0},
+                    {"x":2.0 ,"y":2.0},
+                    {"x":3.0 ,"y":3.0},
+                    {"x":3.8 ,"y":5.0},
+                    {"x":4.4 ,"y":6.4},
+                    {"x":5.8 ,"y":7.5},
+                    {"x":7.3 ,"y":8.2},
+                    {"x":8.3 ,"y":8.7},
+                    {"x":9.3 ,"y":9.2}
+                ]
+               
+                // remap the point domain to the range
+                let xScale = d3.scaleLinear()
+                                .domain(valDomain)
+                                .range([plotPadding,plotWidth+plotPadding])
+                let yScale = d3.scaleLinear()
+                                .domain(valDomain)
+                                .range([plotWidth+plotPadding,plotPadding])
+                
+                drawGrid();
+                drawPoint();
+
+                // draw grids
+                function drawGrid() {
+                    let gridCol = [];
+                    for (let i = 0; i < colNum+1; i++) {
+                        // draw columns
+                        svg2.append("line")
+                            .attr("x1",xScale(i))
+                            .attr("x2",xScale(i))
+                            .attr("y1",yScale(valDomain[0]))
+                            .attr("y2",yScale(valDomain[1]))
+                            .style("stroke","grey")
+                            .style("stroke-width",1);
+
+                        // draw rows
+                        svg2.append("line")
+                            .attr("x1",xScale(valDomain[0]))
+                            .attr("x2",xScale(valDomain[1]))
+                            .attr("y1",yScale(i))
+                            .attr("y2",yScale(i))
+                            .style("stroke","grey")
+                            .style("stroke-width",1);
+                        }
+                    }
+
+                // draw points
+                function drawPoint() {
+                    originalPoints.forEach((d)=>{
+                        svg2.append("circle")
+                            .attr("r",10)
+                            .attr("cx",xScale(d.x))
+                            .attr("cy",yScale(d.y))
+                            .style("fill","DarkRed")
+                    })
+                }
+            </script>
+        </p>
+    </div>
+  </body>
+
+  <style>
+    .container {
+      width: 400px;
+      margin: 50px auto;
+    }
+  </style>
+</html>
