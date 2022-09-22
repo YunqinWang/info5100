@@ -1,0 +1,123 @@
+<html>
+  <head>
+    <title>INFO3300-HW4</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+
+  <body>
+    <div class="container">
+        <h3>Yunqin Wang (yw652)</h3>
+        <p>
+            Problem 1<br/>
+            <ul>
+                <li>
+                    (A)<br/>
+                    Marks: City and state map<br/>
+                    Channels: Varying the <u>Color Hue</u>
+                </li>
+                <li>
+                    (B)<br/>
+                    Marks: Dots<br/>
+                    Channels: Varying the <u>Color Hue</u>, 
+                    <u>Horizontal Aligned Position</u>, and
+                    <u>Vertical Aligned Position</u>
+                </li>
+                <li>
+                    (C)<br/>
+                    Marks: Blue rectangles with outer strokes<br/>
+                    Channels: Varying the <u>Vertical aligned length</u>, 
+                    <u>Vertical aligned length</u>
+                </li>
+            </ul>
+        </p>
+        <p>
+            Problem 2<br/>
+            <svg id="scatterplot" height="500" width="500" style="margin-top:50px" ></svg>
+            <script>
+              //set the chart size and padding
+              d3.json('chip_dataset.json').then((data) => {
+                const svg = d3.select('svg#scatterplot');
+                const width = svg.attr('width');
+                const height = svg.attr('height');
+                const margins = {top: 10, right: 10, bottom: 50, left: 50};
+                const chartWidth = width - margins.left - margins.right;
+                const chartHeight = height - margins.top - margins.bottom;
+
+                //use the trick to set the origin
+                let chartArea = svg.append('g')
+                                    .attr('transform', `translate(${margins.left}, ${margins.top})`);
+
+                // set the data name
+                data.forEach((d,i)=>{
+                  d['releaseDay'] = Number(d['Release Day']);
+                  d['transistors'] = Number(d['Transistors(million)']);
+                });
+
+                // set the scaleLinear
+                const releaseDayExtent =d3.extent(data, d=>d['releaseDay']);
+                const releaseDayScale = d3.scaleLinear().domain(releaseDayExtent).range([0,chartWidth]);
+
+                const transistorsExtent =d3.extent(data, d=>d['transistors']);
+                const transistorsScale = d3.scaleLog().domain(transistorsExtent).range([chartHeight,0]);
+
+                //axis
+                const axisOffset = 10;
+                let leftAxis = d3.axisLeft(transistorsScale);
+                svg.append('g')
+                  .attr('class', 'y axis')
+                  .attr('transform',`translate(${margins.left-axisOffset},${margins.top})`) 
+                  .call(leftAxis);
+
+                let bottomAxis = d3.axisBottom(releaseDayScale);
+                svg.append('g')
+                  .attr('class', 'x axis')
+                  .attr('transform',`translate(${margins.left},${ chartHeight+margins.top + axisOffset})`) 
+                  .call(bottomAxis);
+
+                //grid
+                let leftGridlines = d3.axisLeft(transistorsScale)
+                                      .tickSize(-chartWidth-axisOffset)
+                                      .tickFormat('');
+                svg.append('g').attr('class', 'y gridlines')
+                    .attr('transform', `translate(${margins.left - axisOffset},${margins.top})`)
+                    .call(leftGridlines);
+                
+                let bottomGridLines = d3.axisBottom(releaseDayScale)
+                                        .tickSize(-chartHeight-axisOffset)
+                                        .tickFormat('')                    
+                svg.append('g').attr('class', 'x gridlines')
+                .attr('transform', `translate(${margins.left}, ${chartHeight+margins.top+ axisOffset})`)
+                .call(bottomGridLines);
+
+                //plot circles
+                data.forEach((d,i) =>{
+                  chartArea.append("circle")
+                  .attr("cx",releaseDayScale(d['releaseDay']))
+                  .attr("cy",transistorsScale(d['transistors']))
+                  .attr("r",3)
+                  .attr("opacity",0.3)
+                  .attr("index",i)
+                  .style("fill","darkblue")
+                })   
+              });
+            </script>
+        </p>
+    </div>
+  </body>
+
+  <style>
+    .container {
+      width: 75%;
+      margin: 50px auto;
+    }
+
+    .gridlines line {
+      stroke: #bbb;
+    }
+    
+    .gridlines .domain {
+      stroke: none;
+    }
+      
+  </style>
+</html>
