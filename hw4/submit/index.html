@@ -55,6 +55,7 @@
 
                 // set the scaleLinear
                 const releaseDayExtent =d3.extent(data, d=>d['releaseDay']);
+                console.log(releaseDayExtent);
                 const releaseDayScale = d3.scaleLinear().domain(releaseDayExtent).range([0,chartWidth]);
 
                 const transistorsExtent =d3.extent(data, d=>d['transistors']);
