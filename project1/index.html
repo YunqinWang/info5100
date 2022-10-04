@@ -1,0 +1,247 @@
+<html>
+    <head>
+        <title>project 1</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+    <body>
+        <div class="plot-box">
+            <h4>1949-2021 Anuual Energy Consumption</h4>
+            <svg id = "annual-consumption-plot" width = "1000" height = "500" >  </svg> 
+            <script>
+                const annual = d3.select("svg#annual-consumption-plot");
+                const width = annual.attr("width");
+                const height = annual.attr("height");
+                const margins = {top: 20, right: 10, bottom: 150, left: 50};
+                const chartWidth = width - margins.left - margins.right;
+                const chartHeight = height - margins.top - margins.bottom;
+                const annotations = annual.append("g").attr("id","annual-annotations");
+                const legends = annual.append("g").attr("id","annual-legends")
+                                        .attr("transform",`translate(${margins.left},${height-margins.bottom +70})`);
+                const chartArea = annual.append("g").attr("id","annual-points")
+                                        .attr("transform",`translate(${margins.left},${margins.top})`);
+                const axisOffset = 10;
+
+
+                // load the csv data
+                d3.csv("MER_T01_03.csv").then((data)=>{
+
+                    // a class with source name and consumed value
+                    class sourceType{
+                        source=""; // source name
+                        value=[] // each item is ["YYYYMM", 0]
+                    }
+                    let allSource =[]; // array holding all sources,each item is a sourceType object
+                    let sourceItem = new sourceType();
+
+                    data.forEach((d)=>{
+                        let item = d['Description']; // get the source type
+                        // if it's a new type, then create a new sourceType object
+                        // add it to the allSource array
+                        if(item != sourceItem.source){ 
+                            sourceItem = new sourceType();
+                            allSource.push(sourceItem);
+                            sourceItem.source = item;
+                        }
+                        // add the date and value to the value array
+                        sourceItem.value.push([d['YYYYMM'],d['Value'] ]);
+                    })
+
+                    let allSourceAnnual = []; // array holding all sources,each item is a sourceAnnual object
+                    
+                    
+
+                    // add the consumption value of the same year and same source
+                    allSource.forEach(sourceItem=>{
+                        if(!sourceItem.source.includes("Total")){
+                            let sourceAnnual = {
+                                source:sourceItem.source, // source name
+                                yearValue:[] //  {year:"1900",value:0}
+                            }
+
+                            sourceItem.value.forEach(d=>{ // d[0] is YYYYMM
+                                let year = d[0].substring(0,4);
+                                let month = d[0].substring(4,6);
+                                
+                                if(month =="13") { // value of month13 is the sum of the other 12 months
+                                    let val = d[1];
+                                    let pos = val.indexOf(".");
+                                    val = pos==-1? 0:val.substring(0,pos+3);
+                                    let yearValueItem = {
+                                        year:year,
+                                        value: Number(val) > 0.001? Number(val):0
+                                    };
+                                    sourceAnnual.yearValue.push(yearValueItem);
+                                }
+
+                        })                        
+                        allSourceAnnual.push(sourceAnnual);
+                        }
+                    })
+
+
+                    // draw the annual graph, data: allSourceAnnual
+
+                    //
+                    // y axis
+                    //
+                    const consumptionExtentAll=[];
+                    allSourceAnnual.forEach(sourceAnnualD =>{
+                        let consumptionExtentItem= d3.extent(sourceAnnualD.yearValue,d=>d.value);
+                        consumptionExtentAll.push(consumptionExtentItem[0],consumptionExtentItem[1]); 
+                    })
+                    
+                    let consumptionExtent = d3.extent(consumptionExtentAll, d=>d);
+                    consumptionExtent = beautifyExtent( consumptionExtent);
+
+                    // set the min and max of an extent to multiple of 5
+                    function beautifyExtent(extent){
+                        let min = extent[0];
+                        min = Math.floor(min);
+                        min = min-min%5;
+                        let max = extent[1];
+                        max = Math.ceil(max);
+                        max = max+5-max%5;
+                        extent = [min,max];
+                        return extent;
+                    }                
+
+                    const consumptionScale = d3.scaleLinear().domain(consumptionExtent).range([chartHeight, 0]);
+                    // axis
+                    let leftAxis = d3.axisLeft(consumptionScale);                    
+                    annotations.append('g')
+                        .attr('class', 'y axis')
+                        .attr('transform',`translate(${margins.left-axisOffset},${margins.top})`) 
+                        .call(leftAxis);
+
+                    //gridlines
+                    let leftGridlines = d3.axisLeft(consumptionScale)
+                                            .tickSize(-chartWidth-axisOffset)
+                                            .tickFormat("");
+                    annotations.append("g")
+                        .attr("class", "y gridlines")
+                        .attr("transform",`translate(${margins.left-axisOffset},${margins.top})`)
+                        .call(leftGridlines);
+
+
+                    //
+                    // X axis
+                    //
+                    const yearExtent = d3.extent(allSourceAnnual[0].yearValue,d=>d.year);
+                    const yearScale = d3.scaleLinear().domain(yearExtent).range([0,chartWidth]);
+                    console.log(yearScale)
+                    
+                    // axis
+                    let bottomAxis = d3.axisBottom(yearScale)
+                                        .tickFormat(d3.format("d")) // remove comma in year
+                    annotations.append('g')
+                        .attr('class', 'x axis')
+                        .attr('transform',`translate(${margins.left},${ chartHeight+margins.top + axisOffset})`) 
+                        .call(bottomAxis)
+                    
+                    //gridlines
+                    let bottomGridlines = d3.axisBottom(yearScale)
+                                            .tickSize(-chartHeight-axisOffset)
+                                            .tickFormat("")
+                    annotations.append("g")
+                        .attr("class", "x gridlines")
+                        .attr("transform",`translate(${margins.left},${chartHeight+margins.top+axisOffset})`)
+                        .call(bottomGridlines);
+
+                    //axis labels
+                    annotations.append("text")
+                               .attr("class", "axis-label")
+                               .text("Primary Energy Consumption (Quadrillion Btu)")
+                               .attr("x",20)
+                               .attr("y",10)
+                     annotations.append("text")
+                               .attr("class", "axis-label")
+                               .text("year")
+                               .attr("x",chartWidth+margins.left-25)
+                               .attr("y",chartHeight+margins.top+40)
+                
+                    // draw polylines and legends
+                    // colors for lines
+                    const annualLineColors = ["DeepSkyBlue","Green","LightGreen",
+                             "LightSeaGreen","MediumPurple","Plum",
+                             "PaleVioletRed","Violet","Turquoise"]
+                    // legend posiiton
+                    const legendsRowGap = 20;
+                    const legendsColGap = 350;
+                    const legendsCol = 3;
+                    const legendsLineLength = 30;
+                    const legendsRowWidth = legendsColGap* legendsCol;
+
+                    console.log( allSourceAnnual)
+                    allSourceAnnual.forEach((eachSourceAnnual,i) =>{
+                        let yearValueItem = eachSourceAnnual.yearValue;
+                        var lineGen = d3.line()
+                                        .x(yearValueItem => yearScale(yearValueItem['year']))
+                                        .y(yearValueItem => consumptionScale(yearValueItem .value))
+                                        .curve(d3.curveMonotoneX);
+
+                        chartArea.append("path")
+                                 .datum(yearValueItem)
+                                 .attr("class", "annual-line")
+                                 .attr("fill", "none")
+                                 .attr("stroke", annualLineColors[i])
+                                 .attr("opacity",0.7)
+                                 .attr("stroke-width", 3)
+                                 .attr("d", lineGen);
+
+                        //legend lines
+                        legends.append('line')
+                                .attr("stroke", annualLineColors[i])
+                                .attr("opacity",0.7)
+                                .attr("stroke-width", 3)
+                                .attr("x1", i* legendsColGap % legendsRowWidth)
+                                .attr("y1", (Math.floor(i/legendsCol))* legendsRowGap)
+                                .attr("x2", i* legendsColGap % legendsRowWidth+legendsLineLength)
+                                .attr("y2", (Math.floor(i/legendsCol))* legendsRowGap);
+                        //legend texts
+                        legends.append('text')
+                                .attr("x", i* legendsColGap % legendsRowWidth+legendsLineLength +10)
+                                .attr("y", (Math.floor(i/legendsCol))* legendsRowGap+3)
+                                .text(eachSourceAnnual.source)
+                                .attr("class","legend-text")
+                    })
+
+                    
+                    
+                        
+
+
+                })
+
+            </script>
+        </div>
+    </body>
+</html>
+
+<style>
+    html{
+        width:80%;
+        margin:auto;
+    }
+    h4{
+        margin:15px;
+    }
+    .plot-box{
+        margin:50px 0px;
+        padding: 5px 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px #dddddd;
+    }
+    .gridlines line {
+      stroke: #bbb;
+    }
+    
+    .gridlines .domain {
+      stroke: none;
+    }
+    .axis-label{
+        font-size:15px;
+    }
+    .legend-text{
+        font-size:10px;
+    }
+</style>

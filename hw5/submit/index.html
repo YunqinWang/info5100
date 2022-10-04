@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+    <head>
+        <title>INFO3300-HW5</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+
+    <body>
+        <div class="container">
+            <h3>Yunqin Wang (yw652)</h3>
+            <p>Porblem 1
+            <ul> 
+                <li>A. Divergent scale. Not effective because the color of the midpoint is not neutral.<br/>
+                        It would be hard to match the value witho the color between yellow and blue, and the color between blue and red.</li>
+                <li>B. Not effective. As the data has a midpoint, which is zero, the midpoint of the color shold be neutral.
+                        For now, it is hard to tell if the data is zero or not.</li>
+                <li>C. Green-weak, blue-weak and blue-blind</li>
+                <li>D. No. It is hard to tell the order of the color, and also hard to match the legend with the value.</li>
+            </ul>
+            </p>
+            <p>Porblem 2<br/>
+                <svg id="plot" width="500" height="500" > </svg>
+                <script>
+                    const canvas = d3.select('svg#plot');
+                    const svgHeight = canvas.attr("height");
+                    const svgWidth = canvas.attr("width");
+
+                    // grab data
+                    d3.csv('NCAA_shots.csv').then((data)=>{
+                        //scale the point coordinates in the canvas
+                        const scale = 5;
+                        data.forEach(d=>{
+                            d.x *= scale; d.y *= scale;
+                        })
+                        
+                        // get the extent of attempts
+                        const attemptExtent = d3.extent(data, d=>Number(d['log_attempt']));
+                        // set color scale for attempt
+                        var attemptScale = d3.scaleSequential(d3.interpolateViridis).domain(attemptExtent);
+                        // draw  rects
+                        canvas.selectAll("rect").data(data)
+                              .join( enter => enter.append("rect")
+                                                   .attr("class", "block"))
+                                                   .attr("fill", d => attemptScale(d.log_attempt))
+                                                   .attr("x", d=>d.x)
+                                                   .attr("y", d=>d.y)
+                                                   .attr("width",scale)
+                                                   .attr("height",scale)
+                    })
+                </script><br/>
+                Using logrithmic color scale makes the color distributed more equally, as I get green, cyan and blue
+                scattering around on the canvas instead of a small but intense yellow blob. However, readers can not
+                intuitively perceive the sharp increase of attempts in the area close to basket as the color
+                transition is gradual and smooth.
+            </p>
+            <p>Porblem 3</p>
+            <svg id="bubblePlot" width="420" height="420"></svg>
+            <div>
+                <label for="lum">Change the luminosity of the bubbles</label>
+                <input type="range" id="slider" min="0" max="200">
+            </div>
+            <script>
+                const bubbleCanvas = d3.select("svg#bubblePlot"); 
+                const height = bubbleCanvas.attr("height");
+                const width = bubbleCanvas.attr("width");
+
+                const row = 21;
+                const MAX_H = 360;
+                const MAX_C = 100;
+                
+                
+
+                const bubbles =[];
+                for(let i=0;i<row; i++){
+                    for(let j=0;j<row;j++){
+                        var item = new Object();
+                        item = {
+                            "c":MAX_C/(row-1)*i,
+                            "h":MAX_H/(row-1)*j,
+                        }
+                        bubbles.push(item);
+                    }
+                }
+                
+                const bubbleRadius = 10;
+
+                //remap the bubble data to the canvas width and height
+                let cExtent = d3.extent(bubbles, d=> d['c']);
+                cExtent = [cExtent[0]-bubbleRadius,cExtent[1]+bubbleRadius];
+                const cScale = d3.scaleLinear().domain(cExtent).range([height,0]);
+
+                let hExtent = d3.extent(bubbles, d=> d['h']);
+                hExtent = [hExtent[0]-bubbleRadius,hExtent[1]+bubbleRadius];
+                const hScale = d3.scaleLinear().domain(hExtent).range([0,width]);
+
+                // plot circles based on position and h,c value
+                function showCircles(lightness){        
+                    bubbleCanvas.selectAll("circle").data(bubbles)
+                        .join(enter => enter.append("circle")
+                                            .attr("class","bubble")
+                                            .attr("cx",d=>hScale(d['h']))
+                                            .attr("cy",d=>cScale(d['c']))
+                                            .attr("r",10)
+                                            .attr("index",(d,i)=>i)
+                                            .attr("fill",d=>
+                                            d3.hcl(Number(d.h), Number(d.c), lightness)),
+                            update => update.call(update => update
+                                            .attr("fill",d=>
+                                            d3.hcl(Number(d.h), Number(d.c), lightness)
+                                            ))
+                    )
+                }
+
+                let lum = 80;
+                showCircles(lum);
+
+                // when the input range changes update the circle 
+                d3.select("input#slider").on("input", function() {
+                    showCircles(this.value);
+                });
+
+            </script>
+
+            
+        </div>
+    </body>
+
+</html>
+<style>
+    .container{
+        width:60%;
+        margin:20px auto;
+    }
+    #plot{
+        background:#000;
+    }
+    label{
+        display: block;
+    }
+</style>
