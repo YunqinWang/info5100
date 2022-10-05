@@ -30,6 +30,7 @@
                         source=""; // source name
                         value=[] // each item is ["YYYYMM", 0]
                     }
+
                     let allSource =[]; // array holding all sources,each item is a sourceType object
                     let sourceItem = new sourceType();
 
@@ -46,9 +47,7 @@
                         sourceItem.value.push([d['YYYYMM'],d['Value'] ]);
                     })
 
-                    let allSourceAnnual = []; // array holding all sources,each item is a sourceAnnual object
-                    
-                    
+                    let allSourceAnnual = []; // array holding all sources,each item is a sourceAnnual object                  
 
                     // add the consumption value of the same year and same source
                     allSource.forEach(sourceItem=>{
@@ -65,16 +64,16 @@
                                 if(month =="13") { // value of month13 is the sum of the other 12 months
                                     let val = d[1];
                                     let pos = val.indexOf(".");
-                                    val = pos==-1? 0:val.substring(0,pos+3);
+                                    val = pos==-1? 0:val.substring(0,pos+3); // trim to 2 decimal points
                                     let yearValueItem = {
                                         year:year,
-                                        value: Number(val) > 0.001? Number(val):0
+                                        value: Number(val) > 0.001? Number(val):0 // avoid NaN values
                                     };
                                     sourceAnnual.yearValue.push(yearValueItem);
                                 }
 
                         })                        
-                        allSourceAnnual.push(sourceAnnual);
+                        allSourceAnnual.push(sourceAnnual);// array holding all sources
                         }
                     })
 
@@ -87,13 +86,15 @@
                     const consumptionExtentAll=[];
                     allSourceAnnual.forEach(sourceAnnualD =>{
                         let consumptionExtentItem= d3.extent(sourceAnnualD.yearValue,d=>d.value);
+                        //push both min and max
                         consumptionExtentAll.push(consumptionExtentItem[0],consumptionExtentItem[1]); 
                     })
-                    
+                    // get the extent of all the minx and maxs of each source
                     let consumptionExtent = d3.extent(consumptionExtentAll, d=>d);
                     consumptionExtent = beautifyExtent( consumptionExtent);
 
-                    // set the min and max of an extent to multiple of 5
+                    // set the min and max of an extent to a multiple of 5
+                    // e.g. [2.4,13.5] =>[0,15]
                     function beautifyExtent(extent){
                         let min = extent[0];
                         min = Math.floor(min);
@@ -155,9 +156,9 @@
                                .attr("y",10)
                      annotations.append("text")
                                .attr("class", "axis-label")
-                               .text("year")
+                               .text("Year")
                                .attr("x",chartWidth+margins.left-25)
-                               .attr("y",chartHeight+margins.top+40)
+                               .attr("y",chartHeight+margins.top+45)
                 
                     // draw polylines and legends
                     // colors for lines
@@ -171,14 +172,14 @@
                     const legendsLineLength = 30;
                     const legendsRowWidth = legendsColGap* legendsCol;
 
-                    console.log( allSourceAnnual)
                     allSourceAnnual.forEach((eachSourceAnnual,i) =>{
                         let yearValueItem = eachSourceAnnual.yearValue;
                         var lineGen = d3.line()
                                         .x(yearValueItem => yearScale(yearValueItem['year']))
                                         .y(yearValueItem => consumptionScale(yearValueItem .value))
                                         .curve(d3.curveMonotoneX);
-
+console.log(yearValueItem)
+                        //polylines
                         chartArea.append("path")
                                  .datum(yearValueItem)
                                  .attr("class", "annual-line")
@@ -204,12 +205,6 @@
                                 .text(eachSourceAnnual.source)
                                 .attr("class","legend-text")
                     })
-
-                    
-                    
-                        
-
-
                 })
 
             </script>
