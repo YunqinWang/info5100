@@ -22,7 +22,6 @@
                     
                     //import data
                     d3.json("erie_fishing.json").then(data =>{
-                        console.log(data);
                         //
                         // create  scales
                         //
@@ -75,7 +74,7 @@
                             .call(bottomGridlines);
                  
                         // line generator
-                        data.timeseries.forEach(eachSpecies=>{
+                        data.timeseries.forEach((eachSpecies,i)=>{
                             let dict = eachSpecies.values;
                             var lineGen = d3.line()
                                         .x( dict=> {
@@ -94,22 +93,26 @@
                                     .attr("d", lineGen)
                                     .attr("opacity",0.8);
                             
-                            // let polylines = chartArea.selectAll('g.polylines')
-                            //                             .data(dict, d=>d)
-                            //                             .join('g')
-                            //                             .attr('class','polylines')
-                            //                             .attr("transform", d => `translate(
-                            //                                 ${timeScale((new Date(dict.date)).getFullYear())},
-                            //                                 ${valueScale(dict.total_caught)})`)
+                            //append g tags
+                            gTagAll=chartArea.selectAll(`gTag${i}`)
+                                            .data( dict,d=>d.date)
+                                            .join('g')
+                                            .attr('class',`gTag${i} `)
+                                            .attr("transform", d => {
+                                                let dateItem = (new Date(d.date)).getFullYear();
+                                                return `translate(${timeScale(dateItem)},
+                                                ${valueScale(d.total_caught)} )`
+                                            })
                             
-                            // polylines.append("circle")
-                            //         .attr("class","pop")
-                            //         .attr("r", 3)
-                            //         .attr("fill",dict=>colorScale(dict.species))
-                            //         .attr("cx", 0 )
-                            //         .attr("cy", 0)
+                            //draw circles
+                            gTagAll.append("circle")
+                                    .attr("class","pop")
+                                    .attr("r", 3)
+                                    .attr("fill",dict=>colorScale(eachSpecies.species))
+                                    .attr("cx", 0)
+                                    .attr("cy", 0)
                         })
-                })   
+                    })   
                        
                 </script>
             
