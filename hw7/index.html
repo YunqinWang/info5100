@@ -1,0 +1,150 @@
+<html>
+    <head>
+        <title>INFO3300-HW7</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script src="https://d3js.org/topojson.v3.min.js"></script>
+    </head>
+
+    <body>
+        <div class="container">
+            <h3>Yunqin Wang (yw652)</h3>
+            <p>Problem 1</p>
+            <svg id="choropleth" height="770" width="990" style="margin:20px"></svg>
+            <script>
+
+                const svg = d3.select("#choropleth");
+                const width = svg.attr("width");
+                const height = svg.attr("height");
+                const margin = { top: 0, right: 0, bottom: 0, left:0};
+                const mapWidth = width - margin.left - margin.right;
+                const mapHeight = height - margin.top - margin.bottom;
+
+                const map = svg.append("g")
+                .attr("transform","translate("+margin.left+","+margin.top+")");
+                                
+
+                const plot = async function(){
+                    const nyincome = await d3.json("./ny_income.topo.json");
+
+                    //pick out topographic features
+                    var zips = topojson.feature(nyincome,nyincome.objects.zip_codes);
+                    var zipsMesh = topojson.mesh(nyincome,nyincome.objects.zip_codes);
+                    var stateMesh = topojson.mesh(nyincome,nyincome.objects.state);
+
+                    var projection = d3.geoMercator().fitSize([mapWidth,mapHeight],zips);
+                    var path = d3.geoPath().projection(projection);
+
+                    //colors
+                    const mapColors = ['#e6dfec','#c994c7','#df65b0','#c51a72','#8d0c22']
+
+                    //domain and colorScale of the median income
+                    const  medianIncome = d3.map(zips.features, d=>d.properties.median_income);
+                    const minMax = d3.extent(medianIncome);
+                    const colorScale = d3.scaleQuantile() 
+                                        .domain( medianIncome)
+                                        .range(mapColors);
+
+                    //create viewport
+                    let viewport = map.append("g");
+
+                    //draw states and outlines
+                    let statePaths = viewport.selectAll("path.zips").data(zips.features)
+                                            .join("path")
+                                            .attr("class", "state")
+                                            .attr("note", d => d.id)  // debugging
+                                            .attr("d", path)
+
+                    viewport.append("path").datum(zipsMesh)
+                            .attr("class","zipLine")
+                            .attr("d",path);
+
+                    viewport.append("path").datum(stateMesh)
+                            .attr("class","outline")
+                            .attr("d",path);
+
+                    //color the map
+                    statePaths.style("fill",(d,i)=>colorScale(d.properties.median_income));
+                    
+                    //pin cornell
+                    const cornell = projection([-76.4850,42.4476]);
+                    viewport.append("circle")
+                            .attr("cx",cornell[0])
+                            .attr("cy",cornell[1])
+                            .attr("r",5)
+
+                    //pan, zoom
+                    var plotZoom = d3.zoom()
+                                    .scaleExtent([1,10])
+                                    .on("zoom",plotZoomed)
+                                    
+                    svg .call(plotZoom);
+                    function plotZoomed({transform}){
+                        viewport.attr("transform",transform);
+                        viewport.select(".zipLine")
+                                .style("stroke-width", 1 /transform.k);
+                    }
+
+                    //get legends and threshold
+                    let threshold = colorScale.quantiles();
+                    threshold = [minMax[0], ...threshold, minMax[1]];
+
+                    for(let i=0; i<threshold.length-1;i++){
+                        const node = document.createElement("li");
+                        const legend = document.createElement("div");
+                        const text = document.createTextNode(
+                            `$${formatNumber(threshold[i])} - $${formatNumber(threshold[i+1])}`);
+                        legend.style.background = mapColors[i];
+                        node.appendChild(legend);
+                        node.appendChild(text);
+                        document.getElementById("threshold").appendChild(node);
+                        
+                    }
+
+                    function formatNumber(num){
+                        return Math.round(num).toLocaleString("en-US");
+                    }
+                    
+                }
+                plot();
+            </script>
+            <p>New York State Median Income Map</p>
+            <ul id="threshold">
+            </ul>
+        </div>
+    </body>
+</html>
+
+<style>
+    .container{
+        width:60%;
+        margin:20px auto;
+    }
+    
+    .zipLine{
+        fill: none;
+        stroke:#fff;
+        stroke-width: 1px;
+    }
+    .outline {
+        fill: none;
+        stroke: grey;
+        stroke-width: 3px;
+    }
+
+    #threshold{
+        margin:0;
+        padding: 0;
+    }
+    
+    #threshold li{
+        margin: 8px 0;
+        font-size:18px;
+        display: flex;
+    }
+    #threshold div{
+        width:20px;
+        height:20px;
+        margin-right: 10px;
+    }
+    
+</style>
