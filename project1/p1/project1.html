@@ -1,0 +1,648 @@
+<html>
+  <head>
+    <title>INFO5100 Group Project 1</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      .axis.domain {
+        display: none;
+      }
+      html {
+        width: 1100px;
+        margin: auto;
+      }
+      h4 {
+        margin: 15px;
+      }
+      .plot-box {
+        margin: 50px 0px;
+        padding: 5px 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px #dddddd;
+      }
+      .gridlines line {
+        stroke: #bbb;
+      }
+
+      .gridlines .domain {
+        stroke: none;
+      }
+      .axis-label {
+        font-size: 15px;
+      }
+      .legend-text {
+        font-size: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Energy Consumption Data Visualization</h1>
+    <p>Yunqin Wang(yw652), Yu Yang (yy462), Ying Zhang (yz2249)</p>
+    <div id="lineplot">
+
+      <!-- Energy Consumption 1949-2021-->
+      <div class="plot-box">
+        <h4>1949-2021 Anuual Energy Consumption</h4>
+        <svg id="annual-consumption-plot" width="1000" height="500"></svg>
+        <script>
+          const annual = d3.select("svg#annual-consumption-plot");
+          const annualWidth = annual.attr("width");
+          const annualHeight = annual.attr("height");
+          const annualMargins = { top: 30, right: 10, bottom: 150, left: 50 };
+          const annualChartWidth =
+            annualWidth - annualMargins.left - annualMargins.right;
+          const annualChartHeight =
+            annualHeight - annualMargins.top - annualMargins.bottom;
+          const annualAnnotations = annual
+            .append("g")
+            .attr("id", "annual-annotations");
+          const annualLegends = annual
+            .append("g")
+            .attr("id", "annual-legends")
+            .attr(
+              "transform",
+              `translate(${annualMargins.left},${
+                annualHeight - annualMargins.bottom + 70
+              })`
+            );
+          const annualChartArea = annual
+            .append("g")
+            .attr("id", "annual-points")
+            .attr(
+              "transform",
+              `translate(${annualMargins.left},${annualMargins.top})`
+            );
+          const annualAxisOffset = 10;
+
+          // load the csv data
+          d3.csv("MER_T01_03.csv").then((data) => {
+            // a class with source name and consumed value
+            class sourceType {
+              source = ""; // source name
+              value = []; // each item is ["YYYYMM", 0]
+            }
+
+            let allSource = []; // array holding all sources,each item is a sourceType object
+            let sourceItem = new sourceType();
+
+            data.forEach((d) => {
+              let item = d["Description"]; // get the source type
+              // if it's a new type, then create a new sourceType object
+              // add it to the allSource array
+              if (item != sourceItem.source) {
+                sourceItem = new sourceType();
+                allSource.push(sourceItem);
+                sourceItem.source = item;
+              }
+              // add the date and value to the value array
+              sourceItem.value.push([d["YYYYMM"], d["Value"]]);
+            });
+
+            let allSourceAnnual = []; // array holding all sources,each item is a sourceAnnual object
+
+            // add the consumption value of the same year and same source
+            allSource.forEach((sourceItem) => {
+              if (!sourceItem.source.includes("Total")) {
+                let sourceAnnual = {
+                  source: sourceItem.source, // source name
+                  yearValue: [], //  {year:"1900",value:0}
+                };
+
+                sourceItem.value.forEach((d) => {
+                  // d[0] is YYYYMM
+                  let year = d[0].substring(0, 4);
+                  let month = d[0].substring(4, 6);
+
+                  if (month == "13") {
+                    // value of month13 is the sum of the other 12 months
+                    let val = d[1];
+                    let pos = val.indexOf(".");
+                    val = pos == -1 ? 0 : val.substring(0, pos + 3); // trim to 2 decimal points
+                    let yearValueItem = {
+                      year: year,
+                      value: Number(val) > 0.001 ? Number(val) : 0, // avoid NaN values
+                    };
+                    sourceAnnual.yearValue.push(yearValueItem);
+                  }
+                });
+                allSourceAnnual.push(sourceAnnual); // array holding all sources
+              }
+            });
+
+            // draw the annual graph, data: allSourceAnnual
+
+            //
+            // y axis
+            //
+            const annualConsumptionExtentAll = [];
+            allSourceAnnual.forEach((sourceAnnualD) => {
+              let annualConsumptionExtentItem = d3.extent(
+                sourceAnnualD.yearValue,
+                (d) => d.value
+              );
+              //push both min and max
+              annualConsumptionExtentAll.push(
+                annualConsumptionExtentItem[0],
+                annualConsumptionExtentItem[1]
+              );
+            });
+            // get the extent of all the minx and maxs of each source
+            let annualConsumptionExtent = d3.extent(
+              annualConsumptionExtentAll,
+              (d) => d
+            );
+            annualConsumptionExtent = beautifyExtent(annualConsumptionExtent);
+
+            // set the min and max of an extent to a multiple of 5
+            // e.g. [2.4,13.5] =>[0,15]
+            function beautifyExtent(extent) {
+              let min = extent[0];
+              min = Math.floor(min);
+              min = min - (min % 5);
+              let max = extent[1];
+              max = Math.ceil(max);
+              max = max + 5 - (max % 5);
+              extent = [min, max];
+              return extent;
+            }
+
+            const consumptionScale = d3
+              .scaleLinear()
+              .domain(annualConsumptionExtent)
+              .range([annualChartHeight, 0]);
+            // axis
+            let annualLeftAxis = d3.axisLeft(consumptionScale);
+            annualAnnotations
+              .append("g")
+              .attr("class", "y axis")
+              .attr(
+                "transform",
+                `translate(${annualMargins.left - annualAxisOffset},${
+                  annualMargins.top
+                })`
+              )
+              .call(annualLeftAxis);
+
+            //gridlines
+            let annualLeftGridlines = d3
+              .axisLeft(consumptionScale)
+              .tickSize(-annualChartWidth - annualAxisOffset)
+              .tickFormat("");
+            annualAnnotations
+              .append("g")
+              .attr("class", "y gridlines")
+              .attr(
+                "transform",
+                `translate(${annualMargins.left - annualAxisOffset},${
+                  annualMargins.top
+                })`
+              )
+              .call(annualLeftGridlines);
+
+            //
+            // X axis
+            //
+            const annualYearExtent = d3.extent(
+              allSourceAnnual[0].yearValue,
+              (d) => d.year
+            );
+            const annualYearScale = d3
+              .scaleLinear()
+              .domain(annualYearExtent)
+              .range([0, annualChartWidth]);
+
+            // axis
+            let annualBottomAxis = d3
+              .axisBottom(annualYearScale)
+              .tickFormat(d3.format("d")); // remove comma in year
+            annualAnnotations
+              .append("g")
+              .attr("class", "x axis")
+              .attr(
+                "transform",
+                `translate(${annualMargins.left},${
+                  annualChartHeight + annualMargins.top + annualAxisOffset
+                })`
+              )
+              .call(annualBottomAxis);
+
+            //gridlines
+            let annualBottomGridlines = d3
+              .axisBottom(annualYearScale)
+              .tickSize(-annualChartHeight - annualAxisOffset)
+              .tickFormat("");
+            annualAnnotations
+              .append("g")
+              .attr("class", "x gridlines")
+              .attr(
+                "transform",
+                `translate(${annualMargins.left},${
+                  annualChartHeight + annualMargins.top + annualAxisOffset
+                })`
+              )
+              .call(annualBottomGridlines);
+
+            //axis labels
+            annualAnnotations
+              .append("text")
+              .attr("class", "axis-label")
+              .text("Primary Energy Consumption (Quadrillion Btu)")
+              .attr("x", 20)
+              .attr("y", 12);
+            annualAnnotations
+              .append("text")
+              .attr("class", "axis-label")
+              .text("Year")
+              .attr("x", annualChartWidth + annualMargins.left - 25)
+              .attr("y", annualChartHeight + annualMargins.top + 45);
+
+            // draw polylines and legends
+            // colors for lines
+            const annualLineColors = [
+              "DeepSkyBlue",
+              "Green",
+              "LightGreen",
+              "LightSeaGreen",
+              "MediumPurple",
+              "Plum",
+              "PaleVioletRed",
+              "Violet",
+              "Turquoise",
+            ];
+            // legend posiiton
+            const annualLegendsRowGap = 20;
+            const annualLegendsColGap = 350;
+            const annualLegendsCol = 3;
+            const annualLegendsLineLength = 30;
+            const annualLegendsRowWidth =
+              annualLegendsColGap * annualLegendsCol;
+
+            allSourceAnnual.forEach((eachSourceAnnual, i) => {
+              let annualYearValueItem = eachSourceAnnual.yearValue;
+              var annualLineGen = d3
+                .line()
+                .x((annualYearValueItem) =>
+                  annualYearScale(annualYearValueItem["year"])
+                )
+                .y((annualYearValueItem) =>
+                  consumptionScale(annualYearValueItem.value)
+                )
+                .curve(d3.curveMonotoneX);
+
+              //polylines
+              annualChartArea
+                .append("path")
+                .datum(annualYearValueItem)
+                .attr("class", "annual-line")
+                .attr("fill", "none")
+                .attr("stroke", annualLineColors[i])
+                .attr("opacity", 0.7)
+                .attr("stroke-width", 3)
+                .attr("d", annualLineGen);
+
+              //legend lines
+              annualLegends
+                .append("line")
+                .attr("stroke", annualLineColors[i])
+                .attr("opacity", 0.7)
+                .attr("stroke-width", 3)
+                .attr("x1", (i * annualLegendsColGap) % annualLegendsRowWidth)
+                .attr(
+                  "y1",
+                  Math.floor(i / annualLegendsCol) * annualLegendsRowGap
+                )
+                .attr(
+                  "x2",
+                  ((i * annualLegendsColGap) % annualLegendsRowWidth) +
+                    annualLegendsLineLength
+                )
+                .attr(
+                  "y2",
+                  Math.floor(i / annualLegendsCol) * annualLegendsRowGap
+                );
+              //legend texts
+              annualLegends
+                .append("text")
+                .attr(
+                  "x",
+                  ((i * annualLegendsColGap) % annualLegendsRowWidth) +
+                    annualLegendsLineLength +
+                    10
+                )
+                .attr(
+                  "y",
+                  Math.floor(i / annualLegendsCol) * annualLegendsRowGap + 3
+                )
+                .text(eachSourceAnnual.source)
+                .attr("class", "legend-text");
+            });
+          });
+        </script>
+      </div>
+    </div>
+
+    <!-- energy consumption from 2015 to 2021 -->
+    <div id="barchart1" class="plot-box">
+      <h3>Total energy consumption in the United States from 2015 to 2021</h3>
+      <svg id="bar" height="500" width="1100"></svg>
+      <script>
+        const svg = d3.select("svg#bar");
+        const width = svg.attr("width");
+        const height = svg.attr("height");
+
+        const margin = { top: 10, right: 10, bottom: 30, left: 30 };
+        const chartWidth = width - margin.left - margin.right;
+        const chartHeight = height - margin.top - margin.bottom;
+
+        let chartArea = svg
+          .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        d3.csv("../MER_T01_03.csv", d3.autoType).then((data) => {
+          console.log(data);
+
+          //vertical axis
+          svg
+            .append("line")
+            .attr("x1", 30)
+            .attr("x2", 30)
+            .attr("y1", 450)
+            .attr("y2", 30)
+            .style("stroke", "lightgrey")
+            .style("stroke-weight", 50);
+
+          //horizontal axis
+          svg
+            .append("line")
+            .attr("x1", 30)
+            .attr("x2", 830)
+            .attr("y1", 450)
+            .attr("y2", 450)
+            .style("stroke", "lightgrey")
+            .style("stroke-weight", 50);
+
+          //horizontal text labels
+          let xLabels = [
+            "2015",
+            "2016",
+            "2017",
+            "2018",
+            "2019",
+            "2020",
+            "2021",
+          ];
+          let xposition = 85;
+          xLabels.forEach((d, i) => {
+            svg
+              .append("text")
+              .attr("text-anchor", "middle")
+              .attr("font-size", "15px")
+              .attr("x", xposition)
+              .attr("y", 465)
+              .text(xLabels[i]);
+
+            xposition = xposition + 900 / 8;
+          });
+          svg.append("text").attr("x", 835).attr("y", 450).text("Year");
+
+          //vertical text labels
+          let yLabels = [
+            "90",
+            "92",
+            "94",
+            "96",
+            "98",
+            "100",
+            "102",
+            "103",
+            "105",
+          ];
+          let yposition = 45;
+          yLabels.forEach((d, i) => {
+            svg
+              .append("text")
+              .attr("text-anchor", "middle")
+              .attr("font-size", "12px")
+              .attr("x", 16)
+              .attr("y", 500 - yposition)
+              .text(yLabels[i]);
+
+            yposition = yposition + 500 / 10;
+          });
+          svg
+            .append("text")
+            .attr("x", 10)
+            .attr("y", 20)
+            .text("Total Energy Consumption(Quadrillion Btu)");
+
+          svg
+            .append("rect")
+            .attr("x", 60)
+            .attr("y", 450 - 7.40662 * 25)
+            .attr("height", 7.40662 * 25)
+            .attr("width", 50)
+            .style("fill", "DeepSkyBlue")
+            .attr("opacity", 0.7);
+          svg
+            .append("text")
+            .attr("x", 60)
+            .attr("y", 440 - 7.40662 * 25)
+            .text("97.40662");
+          //year: 2016, total:97.3836
+          svg
+            .append("rect")
+            .attr("x", 60 + 900 / 8)
+            .attr("y", 450 - 7.3836 * 25)
+            .attr("height", 7.3836 * 25)
+            .attr("width", 50)
+            .style("fill", "DeepSkyBlue")
+            .attr("opacity", 0.7);
+          svg
+            .append("text")
+            .attr("x", 60 + 900 / 8)
+            .attr("y", 440 - 7.3836 * 25)
+            .text("97.3836");
+
+          //year: 2017, total:97.65986
+          svg
+            .append("rect")
+            .attr("x", 60 + (900 / 8) * 2)
+            .attr("y", 450 - 7.65986 * 25)
+            .attr("height", 7.65986 * 25)
+            .attr("width", 50)
+            .style("fill", "DeepSkyBlue")
+            .attr("opacity", 0.7);
+          svg
+            .append("text")
+            .attr("x", 60 + (900 / 8) * 2)
+            .attr("y", 440 - 7.65986 * 25)
+            .text("97.65986");
+          //year: 2018, total:101.2443
+          svg
+            .append("rect")
+            .attr("x", 60 + (900 / 8) * 3)
+            .attr("y", 450 - 11.2443 * 25)
+            .attr("height", 11.2443 * 25)
+            .attr("width", 50)
+            .style("fill", "DeepSkyBlue")
+            .attr("opacity", 0.7);
+          svg
+            .append("text")
+            .attr("x", 60 + (900 / 8) * 3)
+            .attr("y", 440 - 11.2443 * 25)
+            .text("101.2443");
+
+          //year: 2019, total:100.4823
+          svg
+            .append("rect")
+            .attr("x", 60 + (900 / 8) * 4)
+            .attr("y", 450 - 10.4823 * 25)
+            .attr("height", 10.4823 * 25)
+            .attr("width", 50)
+            .style("fill", "DeepSkyBlue")
+            .attr("opacity", 0.7);
+          svg
+            .append("text")
+            .attr("x", 60 + (900 / 8) * 4)
+            .attr("y", 440 - 10.4823 * 25)
+            .text("100.4823");
+
+          //year: 2020, total:92.98574
+          svg
+            .append("rect")
+            .attr("x", 60 + (900 / 8) * 5)
+            .attr("y", 450 - 2.98574 * 25)
+            .attr("height", 2.98574 * 25)
+            .attr("width", 50)
+            .style("fill", "DeepSkyBlue")
+            .attr("opacity", 0.7);
+          svg
+            .append("text")
+            .attr("x", 60 + (900 / 8) * 5)
+            .attr("y", 440 - 2.98574 * 25)
+            .text("92.98574");
+
+          //year: 2021, total:97.51823
+          svg
+            .append("rect")
+            .attr("x", 60 + (900 / 8) * 6)
+            .attr("y", 450 - 7.51823 * 25)
+            .attr("height", 7.51823 * 25)
+            .attr("width", 50)
+            .style("fill", "DeepSkyBlue")
+            .attr("opacity", 0.7);
+          svg
+            .append("text")
+            .attr("x", 60 + (900 / 8) * 6)
+            .attr("y", 440 - 7.51823 * 25)
+            .text("97.51823");
+        });
+      </script>
+    </div>
+
+    <!-- Energy Consumption June 2022  -->
+    <div id="bartchart2" class="plot-box">
+      <h3>Energy Consumption June 2022</h3>
+      <p>Quadrillion Btu</p>
+      <svg id="jb" width="850" height="400"></svg>
+      <script id="june">
+        d3.csv("MER_T01_03.csv", d3.autoType).then((data) => {
+          console.log(data);
+          let june = data.filter((data) => data.YYYYMM === 202206);
+          june = june.slice(0, 10);
+          const removed = june.splice(3, 1);
+          console.log(june);
+
+          const svgJune = d3.select("svg#jb");
+          const widthJune = svgJune.attr("width");
+          const heightJune = svgJune.attr("height");
+          const marginJune = { top: 10, right: 10, bottom: 50, left: 350 };
+          const chartWidthJune = widthJune - marginJune.left - marginJune.right;
+          const chartHeightJune =
+            heightJune - marginJune.top - marginJune.bottom;
+
+          let annotationsJune = svgJune.append("g").attr("id", "annotations");
+          let chartAreaJune = svgJune
+            .append("g")
+            .attr("id", "points")
+            .attr(
+              "transform",
+              `translate(${marginJune.left},${marginJune.top})`
+            );
+
+          const valueExtentJune = d3.extent(june, (june) => june.Value);
+          console.log(valueExtentJune);
+          const valueScaleJune = d3
+            .scaleLinear()
+            .domain([0, 3.5])
+            .range([0, chartWidthJune]);
+
+          let bottomAxisJune = d3.axisBottom(valueScaleJune).ticks(10);
+          let bottomAxisGJune = annotationsJune
+            .append("g")
+            .attr("class", "x axis")
+            .attr(
+              "transform",
+              `translate(${marginJune.left},${
+                chartHeightJune + marginJune.top + 10
+              })`
+            )
+            .call(bottomAxisJune);
+
+          const description = d3.map(june, (june) => june.Description);
+          const yScaleJune = d3
+            .scaleBand()
+            .domain(description)
+            .range([chartHeightJune, 0])
+            .padding(0.1);
+
+          let leftAxisJune = d3.axisLeft(yScaleJune);
+          annotationsJune
+            .append("g")
+            .attr("class", "y axis")
+            .attr(
+              "transform",
+              `translate(${marginJune.left},${marginJune.top})`
+            )
+            .call(leftAxisJune);
+
+          color = d3.scaleOrdinal([
+            "DeepSkyBlue",
+            "Green",
+            "LightGreen",
+            "LightSeaGreen",
+            "MediumPurple",
+            "Plum",
+            "PaleVioletRed",
+            "Violet",
+            "Turquoise",
+          ]);
+
+          svgJune
+            .selectAll("myRect")
+            .data(june)
+            .join("rect")
+            .attr("id", "rect")
+            .attr("x", valueScaleJune(2.5))
+            .attr("y", (june) => yScaleJune(june.Description) + 10)
+            .attr("width", (june) => valueScaleJune(june.Value))
+            .attr("height", yScaleJune.bandwidth())
+            .attr("fill", color)
+            .attr("opacity", 0.7);
+
+          june.forEach((j, i) => {
+            svgJune
+              .append("text")
+              // .attr("text-anchor", "middle")
+              .attr("font-size", "10px")
+              .attr("x", valueScaleJune(2.51))
+              .attr("y", yScaleJune(j.Description) + 30.5)
+              .text(Math.floor(j.Value * 100) / 100)
+              .attr("stroke", "black")
+              .attr("stroke-width", "1px");
+          });
+        });
+
+      </script>
+    </div>
+  </body>
+</html>

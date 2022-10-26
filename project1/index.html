@@ -9,17 +9,17 @@
             <svg id = "annual-consumption-plot" width = "1000" height = "500" >  </svg> 
             <script>
                 const annual = d3.select("svg#annual-consumption-plot");
-                const width = annual.attr("width");
-                const height = annual.attr("height");
-                const margins = {top: 20, right: 10, bottom: 150, left: 50};
-                const chartWidth = width - margins.left - margins.right;
-                const chartHeight = height - margins.top - margins.bottom;
-                const annotations = annual.append("g").attr("id","annual-annotations");
-                const legends = annual.append("g").attr("id","annual-legends")
-                                        .attr("transform",`translate(${margins.left},${height-margins.bottom +70})`);
-                const chartArea = annual.append("g").attr("id","annual-points")
-                                        .attr("transform",`translate(${margins.left},${margins.top})`);
-                const axisOffset = 10;
+                const annualWidth = annual.attr("width");
+                const annualHeight = annual.attr("height");
+                const annualMargins = {top: 30, right: 10, bottom: 150, left: 50};
+                const annualChartWidth = annualWidth - annualMargins.left - annualMargins.right;
+                const annualChartHeight = annualHeight - annualMargins.top - annualMargins.bottom;
+                const annualAnnotations = annual.append("g").attr("id","annual-annotations");
+                const annualLegends = annual.append("g").attr("id","annual-legends")
+                                        .attr("transform",`translate(${annualMargins.left},${annualHeight-annualMargins.bottom +70})`);
+                const annualChartArea = annual.append("g").attr("id","annual-points")
+                                        .attr("transform",`translate(${annualMargins.left},${annualMargins.top})`);
+                const annualAxisOffset = 10;
 
 
                 // load the csv data
@@ -83,15 +83,15 @@
                     //
                     // y axis
                     //
-                    const consumptionExtentAll=[];
+                    const annualConsumptionExtentAll=[];
                     allSourceAnnual.forEach(sourceAnnualD =>{
-                        let consumptionExtentItem= d3.extent(sourceAnnualD.yearValue,d=>d.value);
+                        let annualConsumptionExtentItem= d3.extent(sourceAnnualD.yearValue,d=>d.value);
                         //push both min and max
-                        consumptionExtentAll.push(consumptionExtentItem[0],consumptionExtentItem[1]); 
+                        annualConsumptionExtentAll.push(annualConsumptionExtentItem[0],annualConsumptionExtentItem[1]); 
                     })
                     // get the extent of all the minx and maxs of each source
-                    let consumptionExtent = d3.extent(consumptionExtentAll, d=>d);
-                    consumptionExtent = beautifyExtent( consumptionExtent);
+                    let annualConsumptionExtent = d3.extent(annualConsumptionExtentAll, d=>d);
+                    annualConsumptionExtent = beautifyExtent( annualConsumptionExtent);
 
                     // set the min and max of an extent to a multiple of 5
                     // e.g. [2.4,13.5] =>[0,15]
@@ -106,59 +106,58 @@
                         return extent;
                     }                
 
-                    const consumptionScale = d3.scaleLinear().domain(consumptionExtent).range([chartHeight, 0]);
+                    const consumptionScale = d3.scaleLinear().domain(annualConsumptionExtent).range([annualChartHeight, 0]);
                     // axis
-                    let leftAxis = d3.axisLeft(consumptionScale);                    
-                    annotations.append('g')
+                    let annualLeftAxis = d3.axisLeft(consumptionScale);                    
+                    annualAnnotations.append('g')
                         .attr('class', 'y axis')
-                        .attr('transform',`translate(${margins.left-axisOffset},${margins.top})`) 
-                        .call(leftAxis);
+                        .attr('transform',`translate(${annualMargins.left-annualAxisOffset},${annualMargins.top})`) 
+                        .call(annualLeftAxis);
 
                     //gridlines
-                    let leftGridlines = d3.axisLeft(consumptionScale)
-                                            .tickSize(-chartWidth-axisOffset)
+                    let annualLeftGridlines = d3.axisLeft(consumptionScale)
+                                            .tickSize(-annualChartWidth-annualAxisOffset)
                                             .tickFormat("");
-                    annotations.append("g")
+                    annualAnnotations.append("g")
                         .attr("class", "y gridlines")
-                        .attr("transform",`translate(${margins.left-axisOffset},${margins.top})`)
-                        .call(leftGridlines);
+                        .attr("transform",`translate(${annualMargins.left-annualAxisOffset},${annualMargins.top})`)
+                        .call(annualLeftGridlines);
 
 
                     //
                     // X axis
                     //
-                    const yearExtent = d3.extent(allSourceAnnual[0].yearValue,d=>d.year);
-                    const yearScale = d3.scaleLinear().domain(yearExtent).range([0,chartWidth]);
-                    console.log(yearScale)
+                    const annualYearExtent = d3.extent(allSourceAnnual[0].yearValue,d=>d.year);
+                    const annualYearScale = d3.scaleLinear().domain(annualYearExtent).range([0,annualChartWidth]);
                     
                     // axis
-                    let bottomAxis = d3.axisBottom(yearScale)
+                    let annualBottomAxis = d3.axisBottom(annualYearScale)
                                         .tickFormat(d3.format("d")) // remove comma in year
-                    annotations.append('g')
+                    annualAnnotations.append('g')
                         .attr('class', 'x axis')
-                        .attr('transform',`translate(${margins.left},${ chartHeight+margins.top + axisOffset})`) 
-                        .call(bottomAxis)
+                        .attr('transform',`translate(${annualMargins.left},${ annualChartHeight+annualMargins.top + annualAxisOffset})`) 
+                        .call(annualBottomAxis)
                     
                     //gridlines
-                    let bottomGridlines = d3.axisBottom(yearScale)
-                                            .tickSize(-chartHeight-axisOffset)
+                    let annualBottomGridlines = d3.axisBottom(annualYearScale)
+                                            .tickSize(-annualChartHeight-annualAxisOffset)
                                             .tickFormat("")
-                    annotations.append("g")
+                    annualAnnotations.append("g")
                         .attr("class", "x gridlines")
-                        .attr("transform",`translate(${margins.left},${chartHeight+margins.top+axisOffset})`)
-                        .call(bottomGridlines);
+                        .attr("transform",`translate(${annualMargins.left},${annualChartHeight+annualMargins.top+annualAxisOffset})`)
+                        .call(annualBottomGridlines);
 
                     //axis labels
-                    annotations.append("text")
+                    annualAnnotations.append("text")
                                .attr("class", "axis-label")
                                .text("Primary Energy Consumption (Quadrillion Btu)")
                                .attr("x",20)
                                .attr("y",10)
-                     annotations.append("text")
+                    annualAnnotations.append("text")
                                .attr("class", "axis-label")
                                .text("Year")
-                               .attr("x",chartWidth+margins.left-25)
-                               .attr("y",chartHeight+margins.top+45)
+                               .attr("x",annualChartWidth+annualMargins.left-25)
+                               .attr("y",annualChartHeight+annualMargins.top+45)
                 
                     // draw polylines and legends
                     // colors for lines
@@ -166,42 +165,42 @@
                              "LightSeaGreen","MediumPurple","Plum",
                              "PaleVioletRed","Violet","Turquoise"]
                     // legend posiiton
-                    const legendsRowGap = 20;
-                    const legendsColGap = 350;
-                    const legendsCol = 3;
-                    const legendsLineLength = 30;
-                    const legendsRowWidth = legendsColGap* legendsCol;
+                    const annualLegendsRowGap = 20;
+                    const annualLegendsColGap = 350;
+                    const annualLegendsCol = 3;
+                    const annualLegendsLineLength = 30;
+                    const annualLegendsRowWidth = annualLegendsColGap* annualLegendsCol;
 
                     allSourceAnnual.forEach((eachSourceAnnual,i) =>{
-                        let yearValueItem = eachSourceAnnual.yearValue;
-                        var lineGen = d3.line()
-                                        .x(yearValueItem => yearScale(yearValueItem['year']))
-                                        .y(yearValueItem => consumptionScale(yearValueItem .value))
+                        let annualYearValueItem = eachSourceAnnual.yearValue;
+                        var annualLineGen = d3.line()
+                                        .x(annualYearValueItem => annualYearScale(annualYearValueItem['year']))
+                                        .y(annualYearValueItem => consumptionScale(annualYearValueItem .value))
                                         .curve(d3.curveMonotoneX);
-console.log(yearValueItem)
+
                         //polylines
-                        chartArea.append("path")
-                                 .datum(yearValueItem)
+                        annualChartArea.append("path")
+                                 .datum(annualYearValueItem)
                                  .attr("class", "annual-line")
                                  .attr("fill", "none")
                                  .attr("stroke", annualLineColors[i])
                                  .attr("opacity",0.7)
                                  .attr("stroke-width", 3)
-                                 .attr("d", lineGen);
+                                 .attr("d", annualLineGen);
 
                         //legend lines
-                        legends.append('line')
+                        annualLegends.append('line')
                                 .attr("stroke", annualLineColors[i])
                                 .attr("opacity",0.7)
                                 .attr("stroke-width", 3)
-                                .attr("x1", i* legendsColGap % legendsRowWidth)
-                                .attr("y1", (Math.floor(i/legendsCol))* legendsRowGap)
-                                .attr("x2", i* legendsColGap % legendsRowWidth+legendsLineLength)
-                                .attr("y2", (Math.floor(i/legendsCol))* legendsRowGap);
+                                .attr("x1", i* annualLegendsColGap % annualLegendsRowWidth)
+                                .attr("y1", (Math.floor(i/annualLegendsCol))* annualLegendsRowGap)
+                                .attr("x2", i* annualLegendsColGap % annualLegendsRowWidth+annualLegendsLineLength)
+                                .attr("y2", (Math.floor(i/annualLegendsCol))* annualLegendsRowGap);
                         //legend texts
-                        legends.append('text')
-                                .attr("x", i* legendsColGap % legendsRowWidth+legendsLineLength +10)
-                                .attr("y", (Math.floor(i/legendsCol))* legendsRowGap+3)
+                        annualLegends.append('text')
+                                .attr("x", i* annualLegendsColGap % annualLegendsRowWidth+annualLegendsLineLength +10)
+                                .attr("y", (Math.floor(i/annualLegendsCol))* annualLegendsRowGap+3)
                                 .text(eachSourceAnnual.source)
                                 .attr("class","legend-text")
                     })

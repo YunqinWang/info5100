@@ -1,0 +1,136 @@
+<html>
+    <head>
+        <title>INFO3300-HW5</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h3>Yunqin Wang (yw652)</h3>
+            <p>Problem 1</p>
+                <svg id = "graph" width="800" height="400"></svg>
+                <script>
+                    const canvas = d3.select("svg#graph");
+                    const width = canvas.attr("width");
+                    const height = canvas.attr("height");
+                    const margin = {top: 10, right: 10, bottom: 50, left: 50};
+                    const chartWidth = width - margin.left - margin.right;
+                    const chartHeight = height - margin.top - margin.bottom;
+
+                    const annotations = canvas.append("g").attr("id","annotations");
+                    const chartArea = canvas.append("g").attr("id","points")
+                                        .attr("transform",`translate(${margin.left},${margin.top})`);
+                    
+                    //import data
+                    d3.json("erie_fishing.json").then(data =>{
+                        //
+                        // create  scales
+                        //
+
+                        //time scale
+                        let start = (new Date(data.earliest_date)).getFullYear();
+                        let end = (new Date(data.latest_date)).getFullYear();
+                        const timeExtent = [start,end];
+                        const timeScale = d3.scaleLinear().domain(timeExtent).range([0, chartWidth]);
+                        
+                        //value
+                        const valueExtent = [data.min_value,data.max_value];
+                        const valueScale = d3.scaleLinear().domain(valueExtent).range([chartHeight,0]);
+
+                        //species and color scale
+                        let allSpecies=[];
+                        data.timeseries.forEach(d=>{
+                           allSpecies.push(d.species);
+                        })
+                        const colorScale = d3.scaleOrdinal().domain(allSpecies)
+                                                .range( ['SeaGreen','RoyalBlue','YellowGreen',
+                                                'MediumPurple','Tomato','NavajoWhite'] );
+
+                        // y asix --value
+                        let leftAxis = d3.axisLeft(valueScale)
+                        let leftGridlines = d3.axisLeft(valueScale)
+                                                .tickSize(-chartWidth-10)
+                                                .tickFormat("")
+                        annotations.append("g")
+                            .attr("class", "y axis")
+                            .attr("transform",`translate(${margin.left-10},${margin.top})`)
+                            .call(leftAxis)
+                        annotations.append("g")
+                            .attr("class", "y gridlines")
+                            .attr("transform",`translate(${margin.left-10},${margin.top})`)
+                            .call(leftGridlines);
+                        
+                        // x axis --time
+                        let bottomAxis = d3.axisBottom(timeScale).tickFormat(d3.format("d"))
+                        let bottomGridlines = d3.axisBottom(timeScale)
+                                                .tickSize(-chartHeight-10)
+                                                .tickFormat("")
+                        annotations.append("g")
+                            .attr("class", "x axis")
+                            .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
+                            .call(bottomAxis);
+                        annotations.append("g")
+                            .attr("class", "x gridlines")
+                            .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
+                            .call(bottomGridlines);
+                 
+                        // line generator
+                        data.timeseries.forEach((eachSpecies,i)=>{
+                            let dict = eachSpecies.values;
+                            var lineGen = d3.line()
+                                        .x( dict=> {
+                                            let dateItem = (new Date(dict.date)).getFullYear();
+                                            return timeScale(dateItem);
+                                        })
+                                        .y( dict=> valueScale(dict.total_caught))   
+
+                            // draw polylines
+                            chartArea.append("path")
+                                    .datum(dict)
+                                    .attr("class", "line")
+                                    .attr("fill", "none")
+                                    .attr("stroke", dict=>colorScale(eachSpecies.species))
+                                    .attr("stroke-width", 2)
+                                    .attr("d", lineGen)
+                                    .attr("opacity",0.8);
+                            
+                            //append g tags
+                            gTagAll=chartArea.selectAll(`gTag${i}`)
+                                            .data( dict,d=>d.date)
+                                            .join('g')
+                                            .attr('class',`gTag${i} `)
+                                            .attr("transform", d => {
+                                                let dateItem = (new Date(d.date)).getFullYear();
+                                                return `translate(${timeScale(dateItem)},
+                                                ${valueScale(d.total_caught)} )`
+                                            })
+                            
+                            //draw circles
+                            gTagAll.append("circle")
+                                    .attr("class","pop")
+                                    .attr("r", 3)
+                                    .attr("fill",dict=>colorScale(eachSpecies.species))
+                                    .attr("cx", 0)
+                                    .attr("cy", 0)
+                        })
+                    })   
+                       
+                </script>
+            
+        </div>
+    </body>
+</html>
+
+<style>
+    .container{
+        width:60%;
+        margin:20px auto;
+    }
+    
+    .gridlines line {
+      stroke: #bbb;
+    }
+    
+    .gridlines .domain {
+      stroke: none;
+    }
+</style>
