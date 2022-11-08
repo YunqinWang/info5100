@@ -1,0 +1,135 @@
+<html>
+    <head>
+        <title>INFO3300-HW8</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h3>Yunqin Wang (yw652)</h3>
+            <p>Problem 1</p>
+            <svg id ="graph" width="800" height="200" style="margin:20px"></svg>
+            <script>
+                const svg = d3.select("#graph");
+                const width = svg.attr("width");
+                const height = svg.attr("height");
+                const layer = svg.append("g");
+                const layerText = svg.append("g");
+
+                const requestData = async function(){
+                    const partyEdges = await d3.csv("./senate.109.rollcall.edges.csv");
+                    const partyNodes = await d3.csv("./senate.109.rollcall.nodes.csv");
+
+                    //party color
+                    const partyScale = d3.scaleOrdinal()
+                                        .domain(["Dem","Rep","Ind"])
+                                        .range(["Blue","Red","Yellow"]);
+                    //party x scale
+                    const partyNameScale = d3.scaleOrdinal()
+                                            .domain(["Dem","Rep","Ind"])
+                                            .range([0.25*width,0.75*width,0]);
+
+                    //implement simulation
+                    var sim = d3.forceSimulation()
+                                .nodes(partyNodes)
+                                .force("links",d3.forceLink()
+                                                .links(partyEdges)
+                                                .id(d=>d.icpsr))
+                                .force("repulse",d3.forceManyBody().strength(-150))
+                                .force("yPos",d3.forceY()
+                                                .strength(0.8)
+                                                .y(height/2.0))
+                                .force("xPos",d3.forceX()
+                                                .strength(0.8)
+                                                .x(d=>partyNameScale(d.party)))
+                                .on("tick",render);  
+
+                    function render(){
+                        //draw links
+                        let lines = layer.selectAll("line.link").data(partyEdges)
+                                        .join(
+                                            enter=>enter.append("line")
+                                                        .attr("class","link")
+                                                        .attr("stroke","#aaa")
+                                        )
+                                       .attr("x1",d=>d.source.x).attr("x2",d=>d.target.x)
+                                       .attr("y1",d=>d.source.y).attr("y2",d=>d.target.y)
+                        
+                        //draw circles
+                        let circles = layer.selectAll("circle.node").data(partyNodes)
+                                        .join(
+                                            enter => enter.append("circle")
+                                                        .attr("class","node")
+                                                        .attr("stroke", "#333")
+                                                        .attr("r", 8)
+                                                        .attr("cx", 0)
+                                                        .attr("cy", 0)
+                                                        .attr("fill", d =>partyScale(d.party))
+                                                        .style("stroke","#eee")
+                                                        .style("stroke-width",1)
+
+                                                        .call( d3.drag().on("start",dragstart)
+                                                        .on("drag",dragging)
+                                                        .on("end",dragend) )
+                                            )
+                                        .attr("transform", d => `translate(${d.x},${d.y})`);
+                    }      
+                    // Handle drag events and add a text label and a text box
+                    var labelBox = layerText.append("rect")
+                                            .attr("height",30)
+                                            .style("fill","#000")
+                                            .style("opacity",0)
+                    var label = layerText.append("text")
+                                        .attr("id","label")
+                                        .style("fill","#fff")
+                                        .attr("text-anchor","middle")
+                                        .attr("alignment-baseline","middle");
+                                        
+                    let boxWidth;
+                    function dragstart(event, d) {
+                        if (!event.active) {
+                            label.text(d.name);
+                            boxWidth = (d.name).length*10;
+                            sim.alphaTarget(0.08).restart();
+                        }
+                        
+                        d.fx = event.x;
+                        d.fy = event.y;
+                        label.attr("x",event.x).attr("y",event.y-30);
+                        labelBox.attr("x",event.x-boxWidth/2.0).attr("y",event.y-30-15)
+                                .attr("width",boxWidth)
+                                .style("opacity",0.5)
+                    }
+
+                    function dragging(event, d) {
+                        d.fx = event.x;
+                        d.fy = event.y;
+                        label.attr("x",event.x).attr("y",event.y-30);
+                        labelBox.attr("x",event.x-boxWidth/2.0).attr("y",event.y-30-15);
+                    }
+
+                    function dragend(event, d) {
+                        if (!event.active) {
+                            sim.alphaTarget(0);
+                            label.text("");
+                            labelBox.style("opacity",0);
+                        }
+                        d.fx = null;
+                        d.fy = null;
+                    }
+                }
+                requestData();
+
+            </script>
+        </div>
+    </body>
+</html>
+
+<style>
+    .container{
+        width:60%;
+        margin:20px auto;
+    }
+    #label{
+        font-size: 16px;
+    }
+</style>
