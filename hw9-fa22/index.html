@@ -9,8 +9,51 @@
             <p>Problem 1</p>
             <svg id ="plot" width="800" height="500" style="margin:20px"></svg>
             <script>
-                
+                const svg = d3.select("svg#plot");
+                const width = svg.attr("width");
+                const height = svg.attr("height");
+                const margin = {top: 10, right: 10, bottom: 50, left: 50};
+                const chartWidth = width - margin.left - margin.right;
+                const chartHeight = height - margin.top - margin.bottom;
+
+                let annotations = svg.append("g").attr("id","annotations");
+                let chartArea = svg.append("g").attr("id","points")
+                                .attr("transform","translate("+margin.left+","+margin.top+")");
+
+                const requestData = async function(){
+                    const wineData = await d3.json('./wines.json');
+                    
+                    //check for data issues
+                    wineData.forEach(d => {
+                        d.price = Number(d.price.replace(/\$/g,""));
+                        d.points = Number(d.points);
+                    });
+                    console.log(wineData);
+
+                    //scales
+                    const priceExtent = d3.extent(wineData, d=>d.price);
+                    const priceScale = d3.scaleLinear().domain(priceExtent).range([0,chartWidth]);
+                    const pointsExtent = d3.extent(wineData, d=>d.points);
+                    const pointsScale = d3.scaleLinear().domain(pointsExtent).range([chartHeight,0]);
+                    const typeScale = d3.scaleOrinal(d3.schemeCategory10);
+
+                    //y scales
+                    let leftAxis = d3.axisLeft(pointsScale)
+                                    .tickFormat()
+
+                }
+
+                requestData();
             </script>
         </div>
     </body>
 </html>
+
+
+<style>
+    .container{
+        width:60%;
+        margin:20px auto;
+    }
+
+</style>
