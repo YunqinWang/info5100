@@ -7,44 +7,233 @@
         <div class="container">
             <h3>Yunqin Wang (yw652)</h3>
             <p>Problem 1</p>
-            <svg id ="plot" width="800" height="500" style="margin:20px"></svg>
-            <script>
-                const svg = d3.select("svg#plot");
-                const width = svg.attr("width");
-                const height = svg.attr("height");
-                const margin = {top: 10, right: 10, bottom: 50, left: 50};
-                const chartWidth = width - margin.left - margin.right;
-                const chartHeight = height - margin.top - margin.bottom;
+            <div class="plot-box">
+                <svg id ="plot" width="800" height="500"></svg>
+                <script>
+                    const svg = d3.select("svg#plot");
+                    const width = svg.attr("width");
+                    const height = svg.attr("height");
+                    const margin = {top: 30, right: 50, bottom: 50, left: 60};
+                    const chartWidth = width - margin.left - margin.right;
+                    const chartHeight = height - margin.top - margin.bottom;
+    
+                    let annotations = svg.append("g").attr("id","annotations");
+                    let chartArea = svg.append("g").attr("id","points")
+                                    .attr("transform","translate("+margin.left+","+margin.top+")");
+                   
+    
+                    const requestData = async function(){
+                        const wineData = await d3.json('./wines.json');
+                        
+                        let filterdData = [];
+                        
+                        //check for data issues
+                        wineData.forEach(d => {
+                            
+                            d.price = Number(d.price.replace(/\$/g,"").replace(/\,/g,""));
+                            d.points = Number(d.points);
+                            
+                            if( d.price>1 && !Number.isNaN(d.price)&& !Number.isNaN(d.points)&&
+                                d.state == "New York" ||
+                                d.state == "California" ||
+                                d.state == "Washington" ||
+                                d.state == "Oregon"
+                            )
+                                filterdData.push(d);
+                        });
+                        console.log(wineData);
+                        console.log(filterdData);
+                        const delta = wineData.length - filterdData.length;
+    
+                        console.log("Number of bad data items removed is "+ delta );
+    
+                        //scales
+                        const priceExtent = d3.extent(filterdData, d=>d.price);
+                        const priceScale = d3.scaleLog().domain(priceExtent).range([0,chartWidth]);
+                        const pointsExtent = d3.extent(filterdData, d=>d.points);
+                        const pointsScale = d3.scaleLinear().domain(pointsExtent).range([chartHeight,0]);
+                        const typeScale = d3.scaleOrdinal(d3.schemeCategory10);
+    
+                        const offset = 10;
+    
+                        //y axis
+                        let leftAxis = d3.axisLeft(pointsScale)
+                                        
+                        let leftGridlines = d3.axisLeft(pointsScale)
+                                                .tickSize(-chartWidth-offset)
+                                                .tickFormat("")
+                        annotations.append("g")
+                                    .attr("class","y axis")
+                                    .attr("transform",`translate(${margin.left-offset},${margin.top})`)
+                                    .call(leftAxis);
+                        annotations.append("g")
+                                    .attr("class","y gridlines")
+                                    .attr("transform",`translate(${margin.left-offset},${margin.top})`)
+                                    .call(leftGridlines);
+                        
+                        //x axis
+                        let bottomAxis = d3.axisBottom(priceScale)
+                                        
+                        let bottomGridlines = d3.axisBottom(priceScale)
+                                                .tickSize(-chartHeight-offset)
+                                                .tickFormat("")
+                        annotations.append("g")
+                                    .attr("class","x axis")
+                                    .attr("transform",`translate(${margin.left},${chartHeight+margin.top+offset})`)
+                                    .call(bottomAxis);
+                        annotations.append("g")
+                                    .attr("class","x gridlines")
+                                    .attr("transform",`translate(${margin.left},${chartHeight+margin.top+offset})`)
+                                    .call(bottomGridlines);
+                        
+                        //draw dots
+                        let circles = chartArea.selectAll("circle").data(filterdData)
+                                                .join("circle")
+                                                .attr("cx",d=> priceScale(d.price)+jitter())
+                                                .attr("cy",d=> pointsScale(d.points)+jitter())
+                                                .attr("r",5)
+                                                .style("fill",d=>typeScale(d=> d.state))
+                                                .attr("opacity",0.5)
+    
+                        //generate a random number between -4 and 4
+                        function jitter(){
+                            return Math.random()*8-4;
+                        }
+                        //hover
+                        circles.on("mouseover", hoverCircle);
+                        circles.on("mouseout", outCircle);
+                        let layerText = svg.append("g").attr("id","textBox");
+                        let labelBox = layerText.append("rect")
+                                                .attr("id","label-box")
+                                                .attr("height",25)
+                                                .style("fill","#000")
+                                                .style("opacity",0)
+                                                
+                        let label = layerText.append("text")
+                                            .attr("id","label")
+                                            .style("fill","#fff")
+                                            .attr("text-anchor","middle")
+                                            .attr("alignment-baseline","middle");
+                        let format = d3.format(',');
+                        let boxHeight=0;
 
-                let annotations = svg.append("g").attr("id","annotations");
-                let chartArea = svg.append("g").attr("id","points")
-                                .attr("transform","translate("+margin.left+","+margin.top+")");
+                        function hoverCircle(event, d){
+                            
+                            const boxWidth = 200;
+                            const marginOffset = 20;
+                            const marginTop = 10;
 
-                const requestData = async function(){
-                    const wineData = await d3.json('./wines.json');
+                            let x= Number(d3.select(this)
+                                        .attr('cx'))+50
+                            let y= Number(d3.select(this)
+                                        .attr('cy'))-marginTop
+
+                            const leftOffset = x<100? 50: x>700? -50:0;
+                            const topOffset = y<50? 100:0;
+                            
+
+                            label.text(d.title)
+                                 .call(wrap,boxWidth,x,y)
+                                 
+                            labelBox.attr("x",x-boxWidth/2.0-10).attr("y",y-marginOffset-marginTop/2)
+                                    .attr("width",boxWidth+20)
+                                    .attr("height",boxHeight+marginOffset)
+                                    .style("opacity",0.5)
+                                    
+                            layerText.attr('transform', `translate(${leftOffset},${topOffset-boxHeight/2})`)
+                            
+                            d3.select(this)
+                              .transition().duration(200)
+                              .attr("opacity",1)
+                              .attr("r",8)
+    
+                            document.getElementById("info-vareity").innerHTML =d.variety;
+                            document.getElementById("info-state").innerHTML =d.state;
+                            document.getElementById("info-price").innerHTML ="$"+format(d.price);
+                            document.getElementById("info-points").innerHTML =d.points;
+                            document.getElementById("info-title").innerHTML =d.title;
+                        }
+
+
+                        function outCircle(event, d){
+                            label.text("");
+                            
+                            labelBox.attr("height",0)
+                                    .attr("width",0)
+                                    .style("opacity",0)
+                            d3.select(this)
+                              .transition().duration(200)
+                              .attr("opacity",0.5)
+                              .attr("r",5)
+    
+                            document.getElementById("info-vareity").innerHTML ="";
+                            document.getElementById("info-state").innerHTML ="";
+                            document.getElementById("info-price").innerHTML ="";
+                            document.getElementById("info-points").innerHTML ="";
+                            document.getElementById("info-title").innerHTML ="";
+                        }
+
+                        function wrap(text, width,x,y) {
+                            text.each(function () {
+                                var text = d3.select(this),
+                                    words = text.text().split(/\s+/).reverse(),
+                                    word,
+                                    line = [],
+                                    lineNumber = 0,
+                                    lineHeight = 1.1, // ems
+                                    dy = 0, 
+                                    tspan = text.text(null)
+                                                .append("tspan")
+                                                .attr("x", x)
+                                                .attr("y", y)
+                                                .attr("dy", dy + "em");
+
+                                while (word = words.pop()) {
+                                    line.push(word);
+                                    tspan.text(line.join(" "));
+                                    if (tspan.node().getComputedTextLength() > width) {
+                                        line.pop();
+                                        tspan.text(line.join(" "));
+                                        line = [word];
+                                        tspan = text.append("tspan")
+                                                    .attr("x", x)
+                                                    .attr("y", y)
+                                                    .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                                                    .text(word);
+                                    }
+                                }
+                                boxHeight = (1+lineNumber) *20;
+                            });
+                        }
+                    }   
+    
+                    requestData();
+                </script>
+                <div class="info">
+                    <div>
+                        <h6>Variety:</h6>
+                        <p id="info-vareity"></p>
+                    </div>
+                    <div>
+                        <h6>Title:</h6>
+                        <p id="info-title"></p>
+                    </div>
+                    <div>
+                        <h6>State:</h6>
+                        <p id="info-state"></p>
+                    </div>
+                    <div>
+                        <h6>Price:</h6>
+                        <p id="info-price"></p>
+                    </div>
+                    <div>
+                        <h6>Points:</h6>
+                        <p id="info-points"></p>
+                    </div>
                     
-                    //check for data issues
-                    wineData.forEach(d => {
-                        d.price = Number(d.price.replace(/\$/g,""));
-                        d.points = Number(d.points);
-                    });
-                    console.log(wineData);
+                </div>
+            </div>
 
-                    //scales
-                    const priceExtent = d3.extent(wineData, d=>d.price);
-                    const priceScale = d3.scaleLinear().domain(priceExtent).range([0,chartWidth]);
-                    const pointsExtent = d3.extent(wineData, d=>d.points);
-                    const pointsScale = d3.scaleLinear().domain(pointsExtent).range([chartHeight,0]);
-                    const typeScale = d3.scaleOrinal(d3.schemeCategory10);
-
-                    //y scales
-                    let leftAxis = d3.axisLeft(pointsScale)
-                                    .tickFormat()
-
-                }
-
-                requestData();
-            </script>
         </div>
     </body>
 </html>
@@ -52,8 +241,42 @@
 
 <style>
     .container{
-        width:60%;
+        width:75%;
         margin:20px auto;
     }
+    .plot-box{
+        display: flex;
+        align-items:flex-end
+    }
+    #plot{
+        width:75%;
+    }
+    .info{
+        width:25%;
+        margin-bottom: 50px;
+    }
+    .gridlines line {
+      stroke: #bbb;
+    }
+    
+    .gridlines .domain {
+      stroke: none;
+    }
 
+    #label{
+        font-size: 16px;
+    }
+    
+    .info div{
+        display: flex;
+        width:100%;
+        height:80px;
+    }
+    .info h6{
+        margin:5px 0;
+    }
+    .info p{
+        font-size: 16px;
+        margin: 5px 0px 5px 10px;
+    }
 </style>
