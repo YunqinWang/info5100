@@ -55,6 +55,15 @@
                         const typeScale = d3.scaleOrdinal(d3.schemeCategory10);
     
                         const offset = 10;
+
+                        //axis labels
+                        annotations.append("text")
+                                   .text("Price")
+                                   .attr("transform",`translate(${width - margin.right-offset},${height-offset })`)
+                        annotations.append("text")
+                                   .text("Point")
+                                   .attr("transform",`translate(${offset},${ margin.top- offset })`)          
+
     
                         //y axis
                         let leftAxis = d3.axisLeft(pointsScale)
@@ -91,7 +100,7 @@
                                                 .join("circle")
                                                 .attr("cx",d=> priceScale(d.price)+jitter())
                                                 .attr("cy",d=> pointsScale(d.points)+jitter())
-                                                .attr("r",5)
+                                                .attr("r",4)
                                                 .style("fill",d=>typeScale(d=> d.state))
                                                 .attr("opacity",0.5)
     
@@ -164,7 +173,7 @@
                             d3.select(this)
                               .transition().duration(200)
                               .attr("opacity",0.5)
-                              .attr("r",5)
+                              .attr("r",4)
     
                             document.getElementById("info-vareity").innerHTML ="";
                             document.getElementById("info-state").innerHTML ="";
@@ -232,6 +241,13 @@
                     </div>
                     
                 </div>
+            </div>
+
+            <div>
+                <span>New York<span> 
+                <span>Washington<span>    
+                <span>Oregon<span>    
+                <span>California<span>    
             </div>
 
         </div>
