@@ -25,7 +25,7 @@
 
                 const plot = async function(){
                     const nyincome = await d3.json("./ny_income.topo.json");
-
+    console.log(nyincome)
                     //pick out topographic features
                     var zips = topojson.feature(nyincome,nyincome.objects.zip_codes);
                     var zipsMesh = topojson.mesh(nyincome,nyincome.objects.zip_codes);
