@@ -1,0 +1,74 @@
+<html>
+    <head>
+        <title>INFO3300-HW10</title>
+        <script src="https://d3js.org/d3.v7.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h3>Yunqin Wang (yw652)</h3>
+            <p>Movie Barcodes</p>
+            <div id="barcodes">
+            </div>
+
+            <script>
+                async function requestData(){
+                    const barcodes = await d3.json("./movie_barcodes.json");
+                    const container = d3.select("div#barcodes");
+
+                    //append title and canvas with data join
+                    const movieDiv = container.selectAll(".movie").data(barcodes)
+                                                .join("div")
+                                                .attr("class","movie")
+                    const movieTitle = movieDiv .append("h5")
+                                                .text(d=>d.title)
+                    const barCanvas = movieDiv.append("canvas")
+                                             .attr("width",800)
+                                             .attr("height",100)
+                    
+                    barCanvas.each(function(movie,i){
+                        let ctx = this.getContext("2d");
+                        let imageWidth = this.width;
+                        let imageHeight = this.height;
+                        let imageData =  ctx.getImageData(0, 0,imageWidth, imageHeight);
+                        let pixels = imageData.data;
+
+                        movie.bars.forEach(item=>{
+                            // get color
+                            let num = parseInt(item.color.replace('#',''), 16);
+                            let r = (num >> 16) & 255;
+                            let g = (num >> 8) & 255;
+                            let b = num & 255;
+
+                            // get pixel position
+                            let positionX = item.x;
+                            for(let positionY=0; positionY<imageHeight; positionY++) {
+                                let pos = (positionX + positionY*imageWidth)*4;
+                                pixels[pos] = r;
+                                pixels[pos+1] = g;
+                                pixels[pos+2] = b;
+                                pixels[pos+3] = 255;
+
+                            }
+                        })
+                        ctx.putImageData(imageData,0,0);
+                    })
+                }
+
+                requestData();
+            </script>
+        </div>
+    </body>
+</html>
+
+
+
+<style>
+    .container{
+        width:75%;
+        margin:20px auto;
+    }
+    .movie{
+        flex-direction: column;
+        padding-bottom: 40px;
+    }
+</style>
